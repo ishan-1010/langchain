@@ -3517,7 +3517,7 @@ async def test_map_ainvoke_max_concurrency() -> None:
         bump(-1)
         return "x"
 
-    chain = RunnableParallel(**{f"b{i}": RunnableLambda(branch) for i in range(4)})
+    chain = RunnableParallel({f"b{i}": RunnableLambda(branch) for i in range(4)})
 
     await chain.ainvoke({}, {"max_concurrency": 1})
     assert state["peak"] == 1
@@ -3539,7 +3539,7 @@ async def test_map_astream_max_concurrency() -> None:
         state["n"] += delta
         state["peak"] = max(state["peak"], state["n"])
 
-    def make_branch() -> RunnableGenerator:
+    def make_branch() -> RunnableGenerator[Any, str]:
         async def branch(_input: AsyncIterator[Any]) -> AsyncIterator[str]:
             bump(1)
             await asyncio.sleep(0.05)
@@ -3548,7 +3548,7 @@ async def test_map_astream_max_concurrency() -> None:
 
         return RunnableGenerator(branch)
 
-    chain = RunnableParallel(**{f"b{i}": make_branch() for i in range(4)})
+    chain = RunnableParallel({f"b{i}": make_branch() for i in range(4)})
 
     async for _ in chain.astream({}, {"max_concurrency": 1}):
         pass
